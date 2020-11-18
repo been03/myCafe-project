@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.article">
+	<resultMap id="articleResult" type="ArticleVO">
+		<result property="articleId" column="articleId" />
+		<result property="parentId" column="parentId" />
+		<result property="articleTitle" column="articleTitle" />
+		<result property="articleContent" column="articleContent" />
+		<result property="articleCategory" column="articleCategory" />
+		<result property="articleBoard" column="articleBoard" />
+		<result property="articleDate" column="articleDate" />
+		<result property="articleLevel" column="articleLevel" />
+		<result property="nickName" column="nickName" />
+		<result property="memberId" column="memberId"/>
+		<result property="role" column="role"/>
+		<result property="imageId" column="imageId" />
+		<result property="tag" column="tag"></result>
+		<result property="articleCommentCnt" column="articleCommentCnt" />
+		<result property="articleReadCnt" column="articleReadCnt" />
+		<result property="articleLikeCnt" column="articleLikeCnt" />
+		<result property="articleStatus" column="articleStatus" />
+	</resultMap>
+
+	<resultMap id="commentResult" type="CommentVO">
+		<result property="commentId" column="commentId" />
+		<result property="boardId" column="boardId" />
+		<result property="nickName" column="nickName" />
+		<result property="imageId" column="imageId" />
+		<result property="parentId" column="parentId" />
+		<result property="commentLevel" column="commentLevel" />
+		<result property="commentStatus" column="commentStatus" />
+		<result property="commentContent" column="commentContent" />
+		<result property="commentDate" column="commentDate" />
+	</resultMap>
+
+	<resultMap id="eventResult" type="EventVO">
+		<result property="eventId" column="eventId" />
+		<result property="eventName" column="eventName" />
+		<result property="eventDescription" column="eventDescription" />
+		<result property="eventPlace" column="eventPlace" />
+		<result property="eventRegion" column="eventRegion" />
+		<result property="eventStatus" column="eventStatus" />
+		<result property="eventSite" column="eventSite" />
+		<result property="eventStartDate" column="eventStartDate" />
+		<result property="eventEndDate" column="eventEndDate" />
+		<result property="eventRegiDate" column="eventRegiDate" />
+	</resultMap>
+
+	<resultMap id="attendanceResult" type="AttendanceVO">
+		<result property="attendanceId" column="attendanceId"></result>
+		<result property="nickName" column="nickName"></result>
+		<result property="attendanceDate" column="attendanceDate"></result>
+		<result property="content" column="content"></result>
+		<result property="imageId" column="imageId" />
+	</resultMap>
+	
+	<!-- 한 게시판에 속하는 게시글들 전부 갖고오기 -->
+	<select id="selectArticle" parameterType="java.util.Map" resultMap="articleResult">
+	    <![CDATA[
+	    	select level as articleLevel, article.*
+			from tbl_article article
+			where boardId = #{boardId}
+			and articleStatus = 'FALSE'
+			Start with parentId=0
+			Connect by prior articleId=parentId
+			order siblings by articleId desc
+		]]>
+	</select>
+
+	<select id="selectAnnouncements" resultMap="articleResult">
+		<![CDATA[
+			select B.*
+			from
+			    (select rownum as rnum, A.*
+			    from (
+			        select *
+			        from tbl_article
+			        where boardId = 1 and articleStatus='FALSE'
+			        order by articleDate desc ) A
+			    where rownum <=10 ) B
+			where B.rnum >= 1		
+		]]>
+	</select>
+
+	<select id="selectAllArticles" resultMap="articleResult">
+	    <![CDATA[
+	    	select * from tbl_article
+	    	order by articleId desc
+		]]>
+	</select>
+	
+	<select id="selectBestArticles" resultMap="articleResult">
+		select tbl_article.* from tbl_article, tbl_board where tbl_board.boardId = tbl_article.boardId
+		and boardStatus = 'active'
+		and articleStatus = 'FALSE' 
+		and tbl_article.boardId > 5 
+		order by articleLikeCnt desc, articleDate desc 
+	</select>
+	
+	<select id="selectRecentArticles" resultMap="articleResult">
+	<![CDATA[
+		select article.* from 
+		(select tbl_article.*, rownum from tbl_article 
+		where articleStatus='FALSE' and parentId = 0 
+		order by articleId desc, articleDate desc) article
+		where rownum between 1 and 8
+	]]>
+	</select>
+
+	<select id="selectTopArticles" parameterType="java.util.Map"
+		resultMap="articleResult">
+		select * from tbl_article
+		where boardId = #{boardId}
+		and articleLikeCnt >= #{articleLikeCnt}
+		and nickName != 'admin'
+		and articleStatus = 'FALSE'
+		and parentId = 0
+		order by articleLikeCnt desc
+	</select>
+
+	<select id="selectCount" parameterType="int" resultType="int">
+		<![CDATA[
+			select count(*) from tbl_article article 
+	    	where boardId = #{boardId}
+	    	and articleStatus = 'FALSE'
+		]]>
+	</select>
+
+	<select id="selectOneArticle" resultMap="articleResult"
+		parameterType="java.util.Map">
+	    <![CDATA[
+			select article.*, member.imageId from tbl_article article, tbl_member member
+			where articleId = #{articleId} and member.memberId = article.memberId
+		]]>
+	</select>
+
+	<insert id="insertNewArticle" parameterType="articleVO">
+		<choose>
+			<when test="parentId > 0">
+				insert into tbl_article(
+				articleTitle, nickName,
+				memberId, articleDate, articleHead,
+				articleContent, articleBoard,
+				boardId, parentId, tag)
+				values (#{articleTitle}, #{nickName}, 
+				(select memberId from tbl_member where nickName = #{nickName}),
+				#{articleDate}, #{articleHead},
+				#{articleContent}, #{articleBoard}, #{boardId}, #{parentId}, #{tag})
+			</when>
+			<otherwise>
+				insert into tbl_article(
+				articleTitle, nickName, memberId,
+				articleDate, articleHead,
+				articleContent, articleBoard, boardId, tag)
+				values (#{articleTitle}, #{nickName}, 
+				(select memberId from tbl_member where nickName = #{nickName}),
+				#{articleDate},
+				#{articleHead},
+				#{articleContent}, (select boardName from tbl_board where boardId=#{boardId}),
+				#{boardId}, #{tag})
+			</otherwise>
+		</choose>
+	</insert>
+
+	<update id="updateArticle" parameterType="articleVO">
+	    <![CDATA[
+			update tbl_article
+	       	set articleTitle = #{articleTitle},
+	       	boardId = #{boardId},
+	       	articleHead = #{articleHead},
+	       	articleDate = #{articleDate},
+	       	articleContent = #{articleContent},
+	       	articleBoard = (select boardName from tbl_board where boardId=#{boardId}),
+	       	tag = #{tag}
+	       	where articleId = #{articleId}
+    	]]>
+	</update>
+
+	<update id="deleteArticle" parameterType="int">
+	    <![CDATA[
+	      update tbl_article
+	      set articleStatus = 'TRUE'
+	      where articleId = #{articleId}
+    	]]>
+	</update>
+	
+	<!-- 이벤트/행사 관려 SQL들 -->
+	<select id="selectEvent" resultMap="eventResult"
+		parameterType="int">
+		select * from tbl_event where eventId = #{eventId}
+	</select>
+
+	<select id="selectCntEvents" resultType="int">
+		select count(*) from tbl_event
+	</select>
+
+	<select id="selectAllEvents" parameterType="java.util.Map" resultMap="eventResult">
+		<![CDATA[
+			select B.*
+			from
+			    (select rownum as rnum, A.*
+			    from (
+			        select *
+			        from tbl_event
+			        order by eventRegiDate desc, eventId desc ) A
+			    where rownum <= #{end} ) B
+			where B.rnum >= #{start}
+		]]>
+	</select>
+
+	<select id="selectSelectedEvents" resultMap="eventResult" parameterType="java.util.Map">
+		select * from tbl_event 
+		<![CDATA[
+			where cast(eventStartDate as character varying(1000)) <= #{eventDate}
+			and cast(eventEndDate as character varying(1000)) >= #{eventDate}
+		]]>
+	</select>
+
+	<insert id="insertEvent" parameterType="eventVO">
+		<![CDATA[
+			insert into tbl_event(eventName, eventDescription, eventPlace, eventRegion, eventStatus, eventSite, eventStartDate, eventEndDate, eventImage)
+			values (#{eventName}, #{eventDescription}, #{eventPlace}, #{eventRegion}, #{eventStatus}, #{eventSite}, #{eventStartDate}, #{eventEndDate}, #{eventImage})
+		]]>
+		<selectKey keyProperty="eventId" resultType="Integer"
+			order="AFTER">
+			SELECT EVENT_SEQ_NUM.currval FROM dual
+		</selectKey>
+	</insert>
+
+	<update id="updateEvent" parameterType="eventVO">
+		<![CDATA[
+			update tbl_event set
+			eventName = #{eventName}, eventDescription = #{eventDescription},
+			eventPlace = #{eventPlace}, eventStatus = #{eventStatus},
+			eventStartDate = #{eventStartDate}, eventEndDate = #{eventEndDate},
+			eventRegion = #{eventRegion}, eventSite = #{eventSite},
+			eventImage = #{eventImage}
+			where eventId = #{eventId}
+		]]>
+	</update>
+	
+	<!-- 날짜별 출석 데이터 갖고오기 -->
+	<select id="selectAttendanceByDate" parameterType="java.util.Map" resultMap="attendanceResult">
+		select tbl_attendance.*, tbl_member.imageId from tbl_attendance, tbl_member
+		<![CDATA[
+			where cast(attendanceDate as character varying(1000)) = #{attendanceDate}
+		]]>
+		and tbl_member.memberId = tbl_attendance.memberId
+		order by attendanceDate desc
+	</select>
+
+	<insert id="insertAttendance" parameterType="java.util.Map">
+		insert into
+		tbl_attendance (content, nickName, memberId)
+		values (#{content}, #{nickName}, (select memberId from tbl_member where nickName = #{nickName}))
+	</insert>
+
+	<!-- 관리자 - 게시글 복구 -->
+	<update id="restoreArticle" parameterType="int">
+		update tbl_article
+		set articleStatus = 'FALSE'
+		where articleId = #{articleId}
+	</update>
+
+	<!-- 관리자 - 게시글 영구삭제 -->
+	<delete id="removeArticle" parameterType="int">
+		delete from tbl_article
+		where articleId= #{articleId}
+	</delete>
+	
+	<!-- 관리자 - 게시글 스팸처리 -->
+	<update id="blockArticle" parameterType="int">
+		update tbl_article set
+		articleStatus = 'BLOCK'
+		where articleId=#{articleId}
+	</update>
+
+	<!-- 관리자 - 삭제된 게시글 관리 -->
+	<select id="selectDeletedArticle" resultMap="articleResult">
+		select * from
+		tbl_article where articleStatus = 'TRUE' or articleStatus = 'BLOCK'
+		order by articleId desc
+	</select>
+
+	
+	<!-- 게시글 댓글 갖고오기 -->
+	<select id="selectComments" resultMap="commentResult" parameterType="int">
+		select level as commentLevel, cmt.*, member.imageId, member.memberId
+		from tbl_comment cmt, tbl_member member
+		where articleId = #{articleId} and member.nickName = cmt.nickName
+		Start with parentId=0
+		Connect by prior
+		commentId=parentId
+		order siblings by commentId
+	</select>
+
+	<!-- 게시글 댓글 추가하기 -->
+	<insert id="insertNewComment" parameterType="commentVO">
+		insert into tbl_comment(
+		articleId, nickName, memberId, commentContent, commentDate)
+		values (#{articleId}, #{nickName}, 
+		(select memberId from tbl_member where nickName = #{nickName}), 
+		#{commentContent}, #{commentDate})
+	</insert>
+
+	<!-- 게시글 댓글의 댓글 추가하기 -->
+	<insert id="insertReplyComment" parameterType="commentVO">
+		insert into tbl_comment(
+		articleId, nickName, memberId, commentContent, commentDate, parentId)
+		values (#{articleId}, #{nickName}, 
+		(select memberId from tbl_member where nickName = #{nickName}), 
+		#{commentContent}, #{commentDate}, #{parentId})
+	</insert>
+	
+	<!-- 게시글 댓글 삭제하기 -->
+	<update id="deleteComment" parameterType="int">
+		<![CDATA[
+	      update tbl_comment
+	      set commentStatus = 'TRUE'
+	      where commentId = #{commentId}
+    	]]>
+	</update>
+	
+	<!-- 게시글 댓글 신고처리하기 -->
+	<update id="banComment" parameterType="int">
+		update tbl_comment
+		set commentStatus = 'BLOCK'
+		where commentId = #{commentId}
+	</update>
+	
+	<!-- 게시글 조회수 올리기 -->
+	<update id="increaseReadCnt" parameterType="int">
+		<![CDATA[
+			update tbl_article set articleReadCnt = articleReadCnt+1
+			where articleId = #{articleId}
+		]]>
+	</update>
+
+	<!-- 게시글 좋아요 수 올리기 -->
+	<update id="increaseLikeCnt" parameterType="int">
+		<![CDATA[
+			update tbl_article set articleLikeCnt = articleLikeCnt+1
+			where articleId = #{articleId}
+		]]>
+	</update>
+	
+	<insert id="insertLikeInfo" parameterType="java.util.Map">
+		insert into tbl_like values(#{articleId}, #{memberId})
+	</insert>
+
+	<select id="selectLikeInfo" resultMap="articleResult" parameterType="int">
+		select * from tbl_like where articleId=#{articleId}
+	</select>
+
+	<!-- 게시글 댓글 수 올리기 -->
+	<update id="increaseCommentCnt" parameterType="int">
+		<![CDATA[
+			update tbl_article 
+			set articleCommentCnt = (select count(commentId) from tbl_comment where articleId=#{articleId})
+			where articleId = #{articleId}
+		]]>
+	</update>
+	
+	<!-- 관리자 댓글 영구삭제하기 -->
+	<delete id="removeComment" parameterType="int">
+		delete tbl_comment
+		where commentId = #{commentId}
+	</delete>
+
+	<!-- 관리자 댓글 복구하기 -->
+	<update id="restoreComment" parameterType="int">
+		update tbl_comment
+		set
+		commentStatus = 'FALSE'
+		where commentId = #{commentId}
+	</update>
+
+	<!-- 관리자 - 게시판 선택해서 게시글 갖고오기 -->
+	<select id="selectArticleByCategory" parameterType="java.util.Map" resultMap="articleResult">
+		<choose>
+			<when test='articleCategory.equals("all")'>
+				select tbl_article.*, tbl_member.role from tbl_article, tbl_member
+				where articleStatus = 'FALSE'
+				and tbl_member.memberId = tbl_article.memberId
+				order by articleId desc
+			</when>
+			<otherwise>
+				select tbl_article.*, tbl_member.role from tbl_article, tbl_member
+				where articleBoard = #{articleCategory}
+				and articleStatus = 'FALSE'
+				and tbl_member.memberId = tbl_article.memberId
+				order by articleId desc
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- 관리자 - 게시판별 게시글 수 갖고오기 -->
+	<select id="selectCntByCategory" parameterType="java.util.Map" resultType="int">
+		<choose>
+			<when test='articleCategory.equals("all")'>
+				select count(*) from tbl_article where articleStatus
+				= 'FALSE'
+			</when>
+			<otherwise>
+				select count(*) from tbl_article
+				where articleBoard = #{articleCategory}
+				and articleStatus = 'FALSE'
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 관리자 - 삭제된 댓글 갖고오기 -->
+	<select id="selectDeletedComment" resultMap="commentResult">
+		select * from
+		tbl_comment where commentStatus = 'TRUE' or commentStatus = 'BLOCK'
+		order by commentId desc
+	</select>
+
+	<!-- 관리자 - 게시판 이동하기 -->
+	<update id="updateCategoryName" parameterType="java.util.Map">
+		<![CDATA[
+			update tbl_article
+			set articleBoard = #{articleCategory}
+			where articleId = #{articleId}
+		]]>
+	</update>
+
+	<!-- 게시글 검색 -->
+	<select id="searchArticle" parameterType="java.util.Map"
+		resultMap="articleResult">
+		select DISTINCT tbl_article.*, tbl_member.role
+		from tbl_article, tbl_member
+		<choose>
+			<when test='searchCondition.equals("deleteDate")'>
+			<![CDATA[
+				where cast(articleDate as character varying(1000)) >= (#{startDate})
+				and cast(articleDate as character varying(1000)) <= (#{endDate})
+				and (articleStatus = 'TRUE' OR articleStatus = 'BLOCK')
+				and tbl_member.memberId = tbl_article.memberId
+				order by articleId desc
+			]]>
+			</when>
+			<when test='searchCondition.equals("deleteMemberId")'>
+				where tbl_article.nickName like '%' || #{searchInput} || '%'
+				and (articleStatus = 'TRUE' or articleStatus = 'BLOCK')
+				and tbl_member.memberId = tbl_article.memberId
+				order by articleId desc
+			</when>
+			<when test='searchCondition.equals("contentTitle")'>
+				<if test='!articleCategory.equals("all")'>
+					where (articleContent like '%' || #{searchInput} || '%'
+					OR articleTitle like '%' || #{searchInput} || '%' )
+					and articleBoard = #{articleCategory}
+					and articleStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by articleId desc
+				</if>
+				<if test='articleCategory.equals("all")'>
+					where (articleContent like '%' || #{searchInput} || '%'
+					OR articleTitle like '%' || #{searchInput} || '%')
+					and articleStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by articleId desc
+				</if>
+			</when>
+			<when test='searchCondition.equals("all")'>
+				<if test='!articleCategory.equals("all")'>
+					where (articleContent like '%' || #{searchInput} || '%'
+					OR articleTitle like '%' || #{searchInput} || '%'
+					OR tbl_article.nickName like '%' || #{searchInput} || '%' )
+					and articleBoard = #{articleCategory}
+					and articleStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by articleId desc
+				</if>
+				<if test='articleCategory.equals("all")'>
+					where (articleContent like '%' || #{searchInput} || '%'
+					OR articleTitle like '%' || #{searchInput} || '%'
+					OR tbl_article.nickName like '%' || #{searchInput} || '%')
+					and articleStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by articleId desc
+				</if>
+			</when>
+			<when test='!articleCategory.equals("all") and !searchCondition.equals("commentNickName") and !searchCondition.equals("commentContent") '>
+				where tbl_article.${searchCondition} like '%' || #{searchInput} || '%'
+				and articleBoard = #{articleCategory}
+				and articleStatus = 'FALSE'
+				and tbl_member.memberId = tbl_article.memberId
+				order by articleId desc
+			</when>
+			<when test='searchCondition.equals("commentNickName")'>
+				<if test='!articleCategory.equals("all")'>
+					, tbl_comment
+					where tbl_article.articleId = tbl_comment.articleId and
+					tbl_comment.nickName like '%' || #{searchInput} || '%'
+					and articleBoard = #{articleCategory}
+					and articleStatus = 'FALSE'
+					and commentStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by tbl_article.articleId desc
+				</if>
+				<if test='articleCategory.equals("all")'>
+					, tbl_comment where tbl_article.articleId = tbl_comment.articleId and
+					tbl_comment.nickName like '%' || #{searchInput} || '%'
+					and articleStatus = 'FALSE'
+					and commentStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by tbl_article.articleId desc
+				</if>
+			</when>
+			<when test='searchCondition.equals("commentContent")'>
+				<if test='!articleCategory.equals("all")'>
+					, tbl_comment where tbl_article.articleId = tbl_comment.articleId and
+					commentContent like '%' || #{searchInput} || '%'
+					and articleBoard = #{articleCategory}
+					and articleStatus = 'FALSE'
+					and commentStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by tbl_article.articleId desc
+				</if>
+				<if test='articleCategory.equals("all")'>
+					, tbl_comment
+					where tbl_article.articleId = tbl_comment.articleId and
+					commentContent like '%' || #{searchInput} || '%'
+					and articleStatus = 'FALSE'
+					and commentStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by tbl_article.articleId desc
+				</if>
+			</when>
+			<otherwise>
+				<if test='!articleCategory.equals("all")'>
+					where tbl_article.${searchCondition} like '%' || #{searchInput} || '%'
+					and articleBoard = #{articleCategory}
+					and articleStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by articleId desc
+				</if>
+				<if test='articleCategory.equals("all")'>
+					where tbl_article.${searchCondition} like '%' || #{searchInput} || '%'
+					and articleStatus = 'FALSE'
+					and tbl_member.memberId = tbl_article.memberId
+					order by articleId desc
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 댓글 검색 -->
+	<select id="searchComment" parameterType="java.util.Map"
+		resultMap="commentResult">
+		select * from tbl_comment
+		<choose>
+			<when test='searchCondition.equals("deleteDate")'>
+			<![CDATA[
+				where (cast(commentDate as character varying(1000)) >= (#{startDate})
+				and cast(commentDate as character varying(1000) ) <= (#{endDate}))
+				and (commentStatus = 'TRUE' or commentStatus = 'BLOCK')
+				order by commentId desc
+			]]>
+			</when>
+			<when test='searchCondition.equals("deleteMemberId")'>
+				where nickName like '%' || #{searchInput} || '%'
+				and (commentStatus = 'TRUE' or commentStatus = 'BLOCK')
+				order by commentId desc
+			</when>
+			<otherwise>
+				where ${searchCondition} like '%' || #{searchInput} || '%'
+				order by commentId desc
+			</otherwise>
+		</choose>
+	</select>
+
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE tiles-definitions PUBLIC
+  "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+  "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+	<definition name="admin_baseLayout"
+		template="/WEB-INF/views/common/admin/admin_layout.jsp">
+		<put-attribute name="title" value="레이아웃 페이지" />
+		<put-attribute name="admin_header"
+			value="/WEB-INF/views/common/admin/header.jsp" />
+		<put-attribute name="admin_side"
+			value="/WEB-INF/views/common/admin/side.jsp" />
+		<put-attribute name="admin_body"
+			value="" />
+		<put-attribute name="admin_footer"
+			value="/WEB-INF/views/common/footer.jsp" />
+	</definition>
+	
+	<definition name="/admin/article/articleManage" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/article/articleManage.jsp" />
+    </definition>
+    
+    <definition name="/admin/article/articleManageDeleted" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/article/articleManageDeleted.jsp" />
+    </definition>
+    
+    <definition name="/admin/article/articleEventRegister" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/article/articleEventRegister.jsp" />
+    </definition>
+    
+    <definition name="/admin/category/categoryManage" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/category/categoryManage.jsp" />
+    </definition>
+    
+    <definition name="/admin/member/memberDataAdmin" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/member/memberDataAdmin.jsp" />
+    </definition>
+    
+    <definition name="/admin/member/memberLevel" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/member/memberLevel.jsp" />
+    </definition>
+    
+    <definition name="/admin/member/memberManage" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/member/memberManage.jsp" />
+    </definition>
+    
+    <definition name="/admin/member/messageList" extends="admin_baseLayout">
+        <put-attribute name="admin_body" value="/WEB-INF/views/admin/member/messageList.jsp" />
+    </definition>
+    
+</tiles-definitions>

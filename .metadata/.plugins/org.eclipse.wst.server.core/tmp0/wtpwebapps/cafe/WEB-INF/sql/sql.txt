@@ -1,0 +1,241 @@
+drop sequence article_seq_num;
+drop sequence board_seq_num;
+drop sequence comment_seq_num;
+drop sequence ctg_seq_num;
+drop sequence event_seq_num;
+drop sequence attendance_seq_num;
+drop sequence image_seq_num;
+drop sequence member_seq_num;
+drop sequence message_seq_num;
+
+drop table tbl_article;
+drop table tbl_board;
+drop table tbl_comment;
+drop table tbl_ctg;
+drop table tbl_event;
+drop table tbl_attendance;
+drop table tbl_image;
+drop table tbl_member;
+drop table tbl_level;
+drop table tbl_message;
+drop table tbl_login;
+
+
+CREATE SEQUENCE  "ARTICLE_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_article(
+articleId number(20) not null primary key,
+parentId number(20) default 0 not null,
+articleTitle varchar2(1000) not null,
+articleBoard varchar2(1000) not null,
+articleHead varchar2(1000) not null,
+articleContent clob not null,
+articleStatus varchar2(20) default 'FALSE' not null,
+articleDate date default sysdate not null,
+nickName varchar2(255) not null,
+memberId varchar2(255) not null,
+boardId number(10) not null,
+articleCommentCnt number(10) default 0 not null,
+articleReadCnt number(10) default 0 not null,
+articleLikeCnt number(10) default 0 not null,
+articleTag varchar2(4000) default 'NONE_TAG' not null);
+
+CREATE OR REPLACE TRIGGER tbl_article_trigger
+BEFORE INSERT
+ON tbl_article
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT ARTICLE_SEQ_NUM.nextval INTO :NEW.articleId FROM dual;
+END;
+/
+
+CREATE SEQUENCE  "COMMENT_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_comment(
+commentId number(20) not null primary key,
+articleId number(20) not null
+commentContent varchar2(1000) not null,
+parentId number(20) default 0 not null,
+memberId varchar2(255) not null,
+commentStatus varchar2(20) default 'FALSE' not null,
+commentDate date default sysdate not null);
+
+CREATE OR REPLACE TRIGGER tbl_comment_trigger
+BEFORE INSERT
+ON tbl_comment
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT COMMENT_SEQ_NUM.nextval INTO :NEW.commentId FROM dual;
+END;
+/
+
+CREATE SEQUENCE  "BOARD_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_board(
+boardId number(20) not null primary key,
+ctgId number(20) not null,
+boardName varchar2(1000) not null,
+boardStatus varchar2(20) default 'active' not null,
+boardDescription varchar2(1000) not null,
+likeAllow varchar2(20) default 'on' not null,
+likeCnt number(20) default 0 not null,
+topArticleCnt number(20) default 0 not null);
+
+CREATE OR REPLACE TRIGGER tbl_board_trigger
+BEFORE INSERT
+ON tbl_board
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT BOARD_SEQ_NUM.nextval INTO :NEW.boardId FROM dual;
+END;
+/
+CREATE SEQUENCE "CTG_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_ctg(
+ctgId number(20) not null primary key,
+ctgName varchar2(1000) not null,
+ctgWriteLevel number(10) default 1 not null,
+ctgReadLevel number(10) default 1 not null,
+ctgType varchar2(100) not null);
+
+CREATE OR REPLACE TRIGGER tbl_ctg_trigger
+BEFORE INSERT
+ON tbl_ctg
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT CTG_SEQ_NUM.nextval INTO :NEW.ctgId FROM dual;
+END;
+/
+
+CREATE SEQUENCE  "EVENT_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_event(
+eventId number(10) not null primary key,
+eventName varchar2(100) not null,
+eventDescription varchar2(100) not null,
+eventPlace varchar2(100) not null,
+eventSite varchar2(100) not null,
+eventStartDate date not null,
+eventEndDate date not null,
+eventRegiDate date default sysdate not null);
+
+CREATE OR REPLACE TRIGGER tbl_event_trigger
+BEFORE INSERT
+ON tbl_event
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT EVENT_SEQ_NUM.nextval INTO :NEW.eventId FROM dual;
+END;
+/
+
+CREATE SEQUENCE  "ATTENDANCE_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+create table tbl_attendance(
+attendanceId number(20) not null primary key,
+memberId varchar2(255) not null,
+nickName varchar2(255) not null,
+attendanceDate date default sysdate not null,
+content varchar2(1000) not null);
+
+CREATE OR REPLACE TRIGGER tbl_attendance_trigger
+BEFORE INSERT
+ON tbl_attendance
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT ATTENDANCE_SEQ_NUM.nextval INTO :NEW.attendanceId FROM dual;
+END;
+/
+
+CREATE SEQUENCE  "IMAGE_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_image(
+imageId number(20) not null primary key,
+boardId number(20) not null,
+imageDate Date default sysdate not null,
+memberId number(20) not null);
+
+CREATE OR REPLACE TRIGGER tbl_image_trigger
+BEFORE INSERT
+ON tbl_image
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT IMAGE_SEQ_NUM.nextval INTO :NEW.imageId FROM dual;
+END;
+/
+
+CREATE SEQUENCE  "MEMBER_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_member(
+memberNo number(20) not null primary key,
+memberId varchar2(255) not null,
+memberName varchar2(255) not null,
+nickName varchar2(255) not null,
+memberJoinDate date default sysdate not null,
+email varchar2(255) not null,
+memberPwd varchar2(255) not null,
+telNum varchar2(255) not null,
+updateDate date default sysdate not null,
+approval_status varchar2(20) default 'false' not null,
+approval_key varchar2(20),
+memberLevel number(38) default 1 not null,
+imageId varchar2(1000) default 'basic' not null,
+role varchar2(20) default 'USER' not null,
+joinCnt number(10));
+
+CREATE OR REPLACE TRIGGER tbl_member_trigger
+BEFORE INSERT
+ON tbl_member
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT MEMBER_SEQ_NUM.nextval INTO :NEW.memberNo FROM dual;
+END;
+/
+
+create table tbl_login(
+memberId varchar2(255) not null primary key,
+memberPwd varchar2(255) not null,
+loginTime date default sysdate not null,
+status varchar2(20) default 'active' not null,
+loginCnt number(20) default 0 not null,
+updateStatusDate date default sysdate not null,
+articleCnt number(20) default 0 not null,
+commentCnt number(20) default 0 not null);
+
+create table tbl_level (
+levelNo number(10) not null primary key,
+levelName varchar2(30) not null,
+articleCnt number(10) default 0 not null,
+commentCnt number(10) default 0 not null,
+visitCnt number(10) default 0 not null
+);
+
+CREATE SEQUENCE  "MESSAGE_SEQ_NUM"  MINVALUE 0 MAXVALUE 10000000 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+
+create table tbl_message(
+messageNo number(20) not null primary key,
+memberId varchar2(255) not null,
+nickName varchar2(255) not null,
+messageTitle varchar2(1000) not null,
+messageContent varchar2(4000) not null,
+sendDate date default sysdate not null,
+messageStatus varchar2(20) default 'noRead' not null,
+readDate date
+);
+
+CREATE OR REPLACE TRIGGER tbl_message_trigger
+BEFORE INSERT
+ON tbl_message
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+SELECT MESSAGE_SEQ_NUM.nextval INTO :NEW.messageNo FROM dual;
+END;
+/
+

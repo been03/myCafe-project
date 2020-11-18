@@ -1,0 +1,24 @@
+
+public class test {
+
+	public static void main(String[] args) {
+		  int C=1,A=1;
+	      int CNT=0,NC=0,NA=0;
+	      for(C=1;C<49;C++) {
+	      for(A=1;A<25;A++) {
+	             
+	             NC = C * 2;
+	             NA = A * 4;  
+
+	      if(NC+NA==100) {
+	         CNT=CNT+1;
+	      continue;
+	      }
+	     }
+	   }
+	System.out.println(CNT);
+	}
+
+	}
+
+}

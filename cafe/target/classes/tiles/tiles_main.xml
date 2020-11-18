@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE tiles-definitions PUBLIC
+  "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+  "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+	<definition name="baseLayout"
+		template="/WEB-INF/views/common/layout.jsp">
+		<put-attribute name="title" value="레이아웃 페이지" />
+		<put-attribute name="header"
+			value="/WEB-INF/views/common/header.jsp" />
+		<put-attribute name="side"
+			value="/WEB-INF/views/common/side.jsp" />
+		<put-attribute name="body"
+			value="" />
+		<put-attribute name="footer"
+			value="/WEB-INF/views/common/footer.jsp" />
+	</definition>
+
+	<definition name="/main/index" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/main/index.jsp" />
+    </definition>
+    
+    <definition name="/member/memberForm" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/member/memberForm.jsp" />
+    </definition>
+    
+    <definition name="/member/myPage" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/member/myPage.jsp" />
+    </definition>
+    
+    <definition name="/member/myPageMain" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/member/myPageMain.jsp" />
+    </definition>
+    
+    <definition name="/member/memberMessageList" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/member/memberMessageList.jsp" />
+    </definition>
+    
+    <definition name="/board/boardMain" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/board/boardMain.jsp" />
+    </definition>
+    
+    <definition name="/board/imageBoardMain" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/board/imageBoardMain.jsp" />
+    </definition>
+    
+    <definition name="/article/articleDetail" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleDetail.jsp" />
+    </definition>
+    
+    <definition name="/article/articleNew" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleNew.jsp" />
+    </definition>
+    
+    <definition name="/article/articleModify" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleModify.jsp" />
+    </definition>
+    
+    <definition name="/article/articleEvent" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleEvent.jsp" />
+    </definition>
+    
+    <definition name="/article/articleSearch" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleSearch.jsp" />
+    </definition>
+    
+    <definition name="/article/articleCalendar" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleCalendar.jsp" />
+    </definition>
+    
+    <definition name="/article/articleAttendance" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/article/articleAttendance.jsp" />
+    </definition>
+    
+    <definition name="/member/levelCheck" extends="baseLayout">
+        <put-attribute name="body" value="/WEB-INF/views/member/levelCheck.jsp" />
+    </definition>
+    
+    
+    
+</tiles-definitions>
+
+

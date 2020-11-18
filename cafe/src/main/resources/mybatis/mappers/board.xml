@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mappers.board">
+	<resultMap id="boardResult" type="BoardVO">
+		<result property="boardId" column="boardId" />
+		<result property="ctgId" column="ctgId" />
+		<result property="boardName" column="boardName" />
+		<result property="boardDescription" column = "boardDescription" />
+		<result property="boardStatus" column = "boardStatus" />
+		<result property="boardType" column="boardType"></result>
+		<result property="likeCnt" column="likeCnt" />
+		<result property="topArticleCnt" column="topArticleCnt"/>
+	</resultMap>
+
+	<resultMap id="categoryResult" type="CategoryVO">
+		<result property="ctgId" column="ctgId" />
+		<result property="ctgName" column="ctgName" />
+		<result property="ctgWriteLevel" column="ctgWriteLevel" />
+		<result property="ctgReadLevel" column="ctgReadLevel" />
+	</resultMap>
+
+	<select id="selectBoard" resultMap="boardResult">
+		 <![CDATA[
+			select * from tbl_board where ctgId > 0 order by ctgId, boardId
+		]]>
+	</select>
+	
+	<select id="selectBoardId" parameterType="int" resultMap="boardResult">
+		select * from tbl_board where boardId = #{boardId}
+	</select>
+	
+	<select id="selectBoardCtgId" parameterType="int" resultMap="boardResult">
+		select * from tbl_board where ctgId = #{ctgId}
+	</select>
+	
+	<select id="selectBoardByName" parameterType="java.util.Map" resultMap="boardResult">
+		select * from tbl_board where boardName = #{boardName}
+	</select>
+	
+	<select id="selectPermittedBoard" parameterType="int" resultMap="boardResult">
+		 <![CDATA[
+			select tbl_board.* from tbl_board, tbl_ctg 
+			where tbl_ctg.ctgId = tbl_board.ctgId and tbl_board.ctgId > 1 
+			and tbl_board.ctgId != 4 and ctgWriteLevel <= #{ctgWriteLevel} 
+			order by tbl_board.ctgId, boardId
+		]]>
+	</select>
+
+	
+	
+	<!-- CATEGORY DAO -->
+	<select id="selectCtg" resultMap="categoryResult">
+		<![CDATA[
+			select * from tbl_ctg where ctgId > 0 order by ctgId
+		]]>
+	</select>
+
+	<select id="selectOneCategory" resultMap="categoryResult"
+		parameterType="int">
+		<![CDATA[
+			select * from tbl_ctg where ctgId = #{ctgId}
+		]]>
+	</select>
+	
+	<insert id="insertCtg" parameterType="java.util.Map">
+		<![CDATA[
+			insert into tbl_ctg (ctgName, ctgReadLevel, ctgWriteLevel)
+			values (#{ctgName}, #{ctgReadLevel}, #{ctgWriteLevel})
+		]]>
+		<selectKey keyProperty="ctgId" resultType="Integer" order="AFTER"> 
+			SELECT CTG_SEQ_NUM.currval FROM dual 
+		</selectKey>
+	</insert>
+
+	<insert id="insertBoard" parameterType="java.util.Map">
+		insert into tbl_board (boardName, ctgId, boardDescription, boardType, likeAllow, topArticleCnt, likeCnt)
+		values (#{boardName}, #{ctgId}, #{boardDescription}, #{boardType}, #{likeAllow}, #{topArticleCnt}, #{likeCnt})
+	</insert>
+
+	<update id="updateCategory" parameterType="categoryVO">
+		<![CDATA[
+			update tbl_ctg set
+			ctgReadLevel = #{ctgReadLevel},
+			ctgWriteLevel = #{ctgWriteLevel}
+			where ctgId = #{ctgId}
+		]]>	
+	</update>
+	
+	<update id="updateBoard" parameterType="boardVO">
+		update tbl_board
+		set boardName = #{boardName},
+		likeAllow = #{likeAllow},
+		boardDescription = #{boardDescription},
+		boardStatus = #{boardStatus},
+		<if test='boardStatus.equals("inactive")'>
+			ctgId = 4,
+		</if>
+		likeCnt = #{likeCnt},
+		topArticleCnt = #{topArticleCnt}
+		where boardId = #{boardId}
+	</update>
+
+</mapper>

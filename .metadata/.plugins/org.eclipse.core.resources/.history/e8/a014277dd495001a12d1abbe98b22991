@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mappers.member">
+
+	<resultMap id="memberResult" type="MemberVO">
+		<result property="memberNO" column="memberNO" />
+		<result property="memberId" column="memberId" />
+		<result property="nickName" column="nickName" />
+		<result property="memberJoinDate" column="memberJoinDate" />
+		<result property="loginTime" column="loginTime" />
+		<result property="email" column="email" />
+		<result property="memberPwd" column="memberPwd" />
+		<result property="telNum" column="telNum" />
+		<result property="memberLevel" column="memberLevel" />
+		<result property="imageId" column="imageId" />
+		<result property="memberName" column="memberName" />
+		<result property="updateDate" column="updateDate" />
+		<result property="status" column="status" />
+		<result property="loginCnt" column="loginCnt" />
+		<result property="levelName" column="levelName" />
+		<result property="updateStatusDate" column="updateStatusDate" />
+		<result property="loginTimeString" column="loginTimeString" />
+		<result property="joinTimeString" column="joinTimeString" />
+		<result property="joinCnt" column="joinCnt" />
+	</resultMap>
+
+	<resultMap id="levelResult" type="LevelVO">
+		<result property="levelNo" column="levelNo" />
+		<result property="levelName" column="levelName" />
+		<result property="articleCnt" column="articleCnt" />
+		<result property="commentCnt" column="commentCnt" />
+		<result property="visitCnt" column="visitCnt" />
+	</resultMap>
+
+	<resultMap id="articleResult" type="ArticleVO">
+		<result property="articleId" column="articleId" />
+		<result property="parentId" column="parentId" />
+		<result property="articleTitle" column="articleTitle" />
+		
+		<result property="articleBoard" column="articleBoard" />
+		<result property="articleDate" column="articleDate" />
+		<result property="nickName" column="nickName" />
+		<result property="articleCommentCnt" column="articleCommentCnt" />
+
+		<result property="articleContent" column="articleContent" />
+		<result property="articleReadCnt" column="articleReadCnt" />
+		<result property="articleLikeCnt" column="articleLikeCnt" />
+
+		<result property="articleStatus" column="articleStatus" />
+		<result property="boardId" column="boardId" />
+		<result property="tag" column="tag" />
+		<result property="articleHead" column="articleHead" />
+	</resultMap>
+
+	<resultMap id="messageResult" type="messageVO">
+		<result property="messageNo" column="messageNo" />
+		<result property="memberId" column="memberId" />
+		<result property="nickName" column="nickName" />
+		<result property="messageTitle" column="messageTitle" />
+		<result property="messageContent" column="messageContent" />
+		<result property="sendDate" column="sendDate" />
+		<result property="messageStatus" column="messageStatus" />
+		<result property="readDate" column="readDate" />
+		<result property="senderNickName" column="senderNickName" />
+		<result property="senderMemberId" column="senderMemberId" />
+	</resultMap>
+	
+	<resultMap id="commentResult" type="CommentVO">
+      <result property="commentId" column="commentId" />
+      <result property="articleId" column="articleId" />
+      <result property="commentContent" column="commentContent" />
+      <result property="parentId" column="parentId" />
+
+      <result property="nickName" column="nickName" />
+      <result property="commentDate" column="commentDate" />
+      <result property="commentStatus" column="commentStatus" />
+      <result property="memberId" column="memberId" />
+      <result property="boardId" column="boardId" />
+   </resultMap>
+
+	<select id="selectPagingMember" resultType="memberVO">
+		<![CDATA[ 
+			select B.*
+			from
+		    (select rownum as rnum, A.*
+		    from (
+		        select member.*,
+		        tbl_login.updateStatusDate, tbl_login.status
+		        from tbl_member member,
+				tbl_login
+				where tbl_login.memberId = member.memberId
+		        order by memberNo desc ) A
+		   		where rownum <=10 ) B
+			where B.rnum >= 1
+		]]>
+	</select>
+	
+	
+<!-- Admin/member 공통사용 -->
+	<!-- 한명의 회원 조회 -->
+	<select id="selectMember" resultType="memberVO">
+		select member.*,
+		tbl_login.status
+		from tbl_member member, tbl_login
+		where tbl_login.memberId = member.memberId and member.memberId =
+		#{memberId}
+	</select>
+	
+	<!-- 한명의 회원 정보  -->
+	<select id="selectMemberInfo" resultType="memberVO"
+		parameterType="java.util.Map">
+		select tbl_member.*, tbl_level.levelName, tbl_login.loginCnt, tbl_login.commentCnt, tbl_login.articleCnt 
+		from tbl_member, tbl_level, tbl_login
+		where tbl_member.memberLevel = tbl_level.levelNo and tbl_login.memberId = tbl_member.memberId and tbl_member.memberId = #{memberId}
+	</select>
+	
+	
+<!-- Admin쪽에서 사용 -->
+	<!-- 회원 리스트 -->
+	<select id="memberList" resultType="memberVO">
+		select member.*,
+		tbl_login.updateStatusDate, tbl_login.status
+		from tbl_member member,
+		tbl_login
+		where tbl_login.memberId = member.memberId
+		order by memberJoinDate desc
+	</select>
+
+
+<!-- memberManage.do  활동&활동정지상태인 모든 회원 / 활동정지회원 관리  -->
+	<!-- 회원 리스트 (활동중 &활동중지)-->
+	<select id="selectMemberList" resultType="memberVO">
+		select member.*,
+		tbl_login.*,
+		tbl_level.levelName
+		from tbl_member member,
+		tbl_login, tbl_level
+		where tbl_login.memberId = member.memberId and tbl_level.levelNo = member.memberLevel 
+		and (tbl_login.status = 'active' or tbl_login.status='inactive') and member.role = 'USER' 
+		order by memberJoinDate desc
+	</select>
+	
+	<!-- 활동중지 상태 회원 리스트 -->
+	<select id="selectInactiveMemberList" resultType="memberVO">
+		select member.*,
+		tbl_login.*,
+		tbl_level.levelName
+		from tbl_member member,
+		tbl_login, tbl_level
+		where tbl_login.memberId = member.memberId and tbl_login.status = 'inactive' and tbl_level.levelNo = member.memberLevel 
+		order by memberJoinDate desc
+	</select>
+	
+	<!-- 탈퇴 상태 회원 리스트 -->
+	<select id="selectDropMemberList" resultType="memberVO">
+		select member.*,
+		tbl_login.updateStatusDate,
+		tbl_level.levelName 
+		from tbl_member member,
+		tbl_login, tbl_level 
+		where tbl_login.memberId = member.memberId and tbl_login.status = 'drop' and tbl_level.levelNo = member.memberLevel 
+		order by memberJoinDate desc
+	</select>
+	
+	<!-- 가입대기 상태 회원 리스트 -->
+	<select id="selectWaitingMemberList" resultType="memberVO">
+		select member.*,
+		tbl_login.updateStatusDate 
+		from tbl_member member,
+		tbl_login 
+		where tbl_login.memberId = member.memberId and tbl_login.status = 'waiting' 
+		order by memberJoinDate desc
+	</select>
+
+	<!-- 회원 활동 상태 보기              messageView와 로그인시에도 사용-->
+	<select id="selectMemberStatus" resultMap="memberResult"
+		parameterType="java.util.Map">
+		select status from tbl_login where
+		memberId = #{memberId}
+	</select>
+	
+	<!-- 회원 활동 상태변경 일 select -->
+	<select id="selectUpdateStatusDate" resultMap="memberResult"
+		parameterType="java.util.Map">
+		select updateStatusDate from tbl_login where memberId =
+		#{memberId}
+	</select>
+	
+	<!-- 회원 활동상태 변경 :drop 		mypage(정보수정) 회원탈퇴에서도 사용 -->
+	<update id="updateStatusDrop" parameterType="java.util.Map">
+		<![CDATA[
+			update tbl_login set status = #{status}, updateStatusDate = sysdate where memberId = #{memberId}
+		]]>
+	</update>
+	
+	<!-- 회원 활동정지 : 상태 inactive로 변경 -->
+	<update id="updateStatusSuspension"
+		parameterType="java.util.Map">
+		<![CDATA[
+			update tbl_login set status = #{status}, updateStatusDate = sysdate where memberId = #{memberId}
+		]]>
+	</update>
+	
+	<!-- 회원등급 변경 -->
+	<update id="updateLevel" parameterType="java.util.Map">
+		update tbl_member set
+		memberLevel = #{memberLevel} where memberId = #{memberId}
+	</update>
+	
+	<!-- 회원 활동정지 해제 : 상태 active로 변경 		memberDataAdmin에서도 사용-->
+	<update id="updateStatusRelease" parameterType="java.util.Map">
+	<![CDATA[
+		update tbl_login set status = #{status}, updateStatusDate = sysdate where memberId = #{memberId}
+	]]>
+	</update>
+	
+	<!-- 회원 등급을 제일낮게 변경 -->
+	<update id="updateLowLevel" parameterType="java.util.Map">
+		update tbl_member set
+		memberLevel = 2 where memberId = #{memberId}
+	</update>
+	
+
+<!-- memberLevel.do  회원등급명, 자동등업조건 설정-->
+	<!-- 모든 등급의 이름과 등급조건 가져오기 		memberManage.do와  member에 levelUp에서도 사용-->
+	<select id="selectLevelList" resultType="levelVO">
+		select * from tbl_level
+		order by levelNo
+	</select>
+	
+	<!-- 등급의 설정 변경 : 등급이름변경, (방문수,댓글수,게시글수)기준변경 -->
+	<update id="updateLevelSet" parameterType="java.util.Map">
+		update tbl_level
+		set
+		levelName = #{levelName}, articleCnt = #{articleCnt}, commentCnt=#{commentCnt},
+		visitCnt = #{visitCnt}
+		where levelNo=#{levelNo}
+	</update>
+	
+	
+<!-- memberDataAdmin.do  탈퇴회원정보관리 /가입대기자 승인거절 -->
+	<!-- 회원 tbl_member에서 삭제 -->
+	<delete id="forceDeleteMember" parameterType="java.util.Map">
+		delete from
+		tbl_member where memberId=#{memberId}
+	</delete>
+	
+	<!-- 회원의 tbl_login 데이터 삭제 -->
+	<delete id="deleteTblLoginData" parameterType="java.util.Map">
+		<![CDATA[
+			delete from tbl_login where memberId = #{memberId}
+		]]>
+	</delete>
+
+
+<!-- member쪽에서 사용 -->
+	<!-- 한 등급의 정보 가져오기    (levelUp에 사용)-->
+	<select id = "selectLevelOne" resultType="levelVO">
+		select * from tbl_level where levelNo=#{levelNo}
+	</select>
+
+	
+<!-- 회원 가입 -->
+	<!-- 아이디 중복 검사 -->
+	<select id="checkId" parameterType="String" resultType="int">
+		select
+		count(*) from tbl_member where memberId = #{memberId}
+	</select>
+	
+	<!--비밀번호 체크 -->
+	<select id="checkPw" resultType="int">
+		select count(*) from tbl_member
+		where memberId=#{memberId} and
+		memberPwd=#{memberPwd}
+	</select>
+	
+	<!-- 이메일 중복 검사 -->
+	<select id="checkEmail" parameterType="String" resultType="int">
+		select count(*) from tbl_member where email = #{email}
+	</select>
+
+	<!-- 닉네임 중복 검사 -->
+	<select id="checkNickName" parameterType="String"
+		resultType="int">
+		select count(*) from tbl_member where nickName =
+		#{nickName}
+	</select>
+	
+	<!-- 이메일 인증 -->
+	<update id="approvalMember" parameterType="memberVO">
+		update tbl_member set
+		approval_status = 'true' where email = #{email} and
+		approval_key =
+		#{approval_key}
+	</update>
+	
+	<!-- 회원 가입 -->
+	<insert id="joinMember" parameterType="memberVO">
+		insert into tbl_member
+		(memberId, nickName, email, memberPwd, telNum,
+		memberName,approval_key)
+		values(#{memberId}, #{nickName},
+		#{email},
+		#{memberPwd}, #{telNum},
+		#{memberName},#{approval_key})
+	</insert>
+	
+	<!-- 회원가입시 tbl_login에 데이터 삽입 -->
+	<insert id="insertLoginData" parameterType="memberVO">
+		insert into tbl_login
+		(memberId, memberPwd) values(#{memberId}, #{memberPwd})
+	</insert>
+	
+	
+<!-- 로그인 -->
+	<!-- 로그인 -->
+	<select id="login" parameterType="String" resultType="memberVO">
+		select tbl_member.*, tbl_level.levelName
+		from tbl_member, tbl_level where memberId = #{memberId} and tbl_level.levelNo = tbl_member.memberLevel
+	</select>
+	
+	<!-- 마지막 방문 일  -->
+	<select id="loginTime" resultMap="memberResult"
+		parameterType="java.util.Map">
+		select loginTime from tbl_login where memberId =
+		#{memberId}
+	</select>
+	
+	<!-- 로그인시 loginCnt++  -->
+	<update id="updateLoginCnt" parameterType="java.util.Map">
+		update tbl_login set 
+		loginCnt = loginCnt+1, loginTime=sysdate  where memberId=#{memberId}
+	</update>
+	
+	
+<!-- 아이디 찾기 -->
+	<select id="findId" parameterType="String" resultType="String">
+		select
+		memberId from tbl_member where email = #{email}
+	</select>
+	
+	
+<!-- 회원정보 수정 -->
+	<!-- 회원정보 수정 -->
+	<update id="updateMypage" parameterType="java.util.Map">
+	<![CDATA[
+		update tbl_member set
+		nickName = #{nickName}, telNum = #{telNum}, imageId = #{imageId}, memberName = #{memberName}
+		where memberId = #{memberId}
+	]]>
+	</update>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updatePw" parameterType="memberVO">
+		update tbl_member set
+		memberPwd = #{memberPwd} where memberId = #{memberId}
+	</update>
+	
+
+<!-- myPageMain -->
+	<!-- levelNo에 맞는 등급이름 하나 -->
+	<select id="selectLevelName" resultType="String">
+		select levelName from tbl_level where levelNo=#{levelNo}
+	</select>
+	<!-- 한명의 회원의 총 게시글 수 -->
+	<select id="articleCnt" resultType="int" parameterType="java.util.Map">
+	<![CDATA[
+		select articleCnt from tbl_login where memberId=#{memberId}
+		]]>
+	</select>
+	
+	<!-- 한명의 회원의 총 댓글 수 -->
+	<select id="commentCnt" resultType="int" parameterType="java.util.Map">
+	<![CDATA[
+		select commentCnt from tbl_login where memberId=#{memberId}
+		]]>
+	</select>
+	
+	<!-- 한명의 회원의 총 방문 일 -->
+	<select id="loginCnt" resultType="int"
+		parameterType="java.util.Map">
+		select loginCnt from tbl_login where
+		memberId = #{memberId}
+	</select>
+	
+	<!-- 한명의 회원이 작성한 게시글들 보기 -->
+	<select id="selectMemberWroteArticle" resultType="articleVO">
+	   select * from tbl_article where memberId = #{memberId} and articleStatus='FALSE' order by articleDate desc, articleId desc
+	</select>
+	
+	<!-- 한명의 회원이 작성한 게시글 likeCnt 높은순으로 보기 -->
+	<select id = "selectMemberWroteArticleLikeCnt" resultType="articleVO">
+	   select * from tbl_article where memberId = #{memberId} and articleStatus='FALSE' order by articleLikeCnt desc, articleId desc
+	</select>
+	
+	<!-- 한명의 회원이 작성힌 댓글들 보기 -->
+	<select id="selectMemberWroteComment" resultType="commentVO">
+	   select * from tbl_comment where memberId = #{memberId} and commentStatus='FALSE' order by commentDate desc, commentId desc
+	</select>
+	
+	<!-- comment하나 -->
+	<select id="selectOneComment" resultType="commentVO" parameterType="java.util.Map">
+	   select * from tbl_comment where commentId = #{commentId}
+	</select>
+	
+	<!-- 글 삭제 -->
+	<delete id="deleteArticle" parameterType="int">
+		delete from tbl_article where articleId= #{articleId}
+	</delete>
+	
+	<!-- 댓글 삭제 -->
+	<delete id="deleteComment" parameterType="int">
+		delete from tbl_comment where commentId= #{commentId}
+	</delete>
+	
+	
+<!-- 쪽지 -->
+	<!-- 쪽지 전체 리스트		admin --> 
+	<select id="selectAllMessageList" resultType="messageVO">
+		select * from tbl_message order by sendDate desc
+	</select>
+	
+	<!-- 한명의 멤버 쪽지 리스트 	member-->
+	<select id="selectMemberMessage" resultType="messageVO">
+		select * from tbl_message where memberId=#{memberId} order by sendDate desc
+	</select>
+	
+	<!-- 한명의 멤버 보낸쪽지 리스트 	member-->
+	<select id="selectSendMemberMessage" resultType="messageVO">
+		select * from tbl_message where senderMemberId=#{memberId} order by sendDate desc
+	</select>
+	
+	<!-- 받는사람 닉네임이 변경됐을 때 tbl_message에서 nickName 변경 -->
+	<update id="updateNickName" parameterType="java.util.Map">
+	<![CDATA[
+		update tbl_message
+		set nickName = 
+		(select nickName from tbl_member where tbl_message.memberId = tbl_member.memberId)
+		]]>
+	</update>
+	
+	<!-- 보낸사람 닉네임이 변경됐을 떄 tbl_message에서 senderNickName 변경 -->
+	<update id="updateSenderNickName" parameterType="java.util.Map">
+	<![CDATA[
+		update tbl_message
+		set senderNickName = 
+		(select nickName from tbl_member where tbl_message.senderMemberId = tbl_member.memberId)
+		]]>
+	</update>
+	
+	<!-- 하나의 쪽지  -->
+	<select id="selectOneMessage" resultType="messageVO">
+		select * from tbl_message where messageNo = #{messageNo}
+	</select>
+	
+	<!-- 쪽지 추가 tbl_message -->
+	<insert id="insertMessage" parameterType="messageVO">
+		insert into tbl_message (memberId, nickName, messageTitle, messageContent, senderNickName, senderMemberId) 
+		values (#{memberId},#{nickName},#{messageTitle},#{messageContent}, #{senderNickName}, #{senderMemberId})
+	</insert>
+	
+	<!-- 쪽지 상태 바꾸기 -->
+	<update id="updateMessageStatus">
+		update tbl_message
+		set
+		messageStatus = 'read', readDate = sysdate
+		where messageNo=#{messageNo}
+	</update>
+	
+	<!-- 쪽지삭제 -->
+   <delete id="deleteMessage">
+      delete from tbl_message where messageNo=#{messageNo}
+   </delete>
+	
+	<!-- scheduler사용 -->
+	<delete id="deleteUnreadMsgReserved">
+		<![CDATA[
+			delete from tbl_message where TRUNC(CAST(sysdate AS DATE)) - TRUNC(CAST(senddate AS DATE)) >= 30 and messageStatus = 'noRead'
+		]]>
+	</delete>
+	
+	<delete id="deleteReadMsgReserved">
+		<![CDATA[
+			delete from tbl_message where TRUNC(CAST(sysdate AS DATE)) - TRUNC(CAST(readdate AS DATE)) >= 15 and messageStatus = 'read'
+		]]>
+	</delete>
+	
+	<delete id="deleteLoginReserved">
+		<![CDATA[
+			delete from tbl_login where TRUNC(CAST(sysdate AS DATE)) - TRUNC(CAST(updatestatusdate AS DATE)) >= 30 and status = 'drop'
+		]]>
+	</delete>
+	
+	<delete id="deleteMemberReserved">
+		<![CDATA[
+			delete from tbl_member where memberId IN 
+			(select member_t from 
+				(select tbl_member.memberId as member_t, decode(tbl_login.memberId, null, 'none', tbl_login.memberId) as login_t 
+				from tbl_member, tbl_login 
+				where tbl_login.memberId (+) = tbl_member.memberId)  
+			where login_t = 'none')
+		]]>
+	</delete>
+	
+	<delete id="deleteLoginWaiting">
+		<![CDATA[
+			delete from tbl_login 
+			where memberId IN 
+				(select memberId 
+				from tbl_login 
+				where TRUNC(CAST(sysdate AS DATE)) - TRUNC(CAST(updatestatusdate AS DATE)) >= 1 
+				and status = 'waiting')
+		]]>
+	</delete>
+	
+	
+	<!-- 통계 -->
+	<!-- 구글차트 방문자수 최근 로그인 횟수 -->
+	<select id="chartCnt" resultMap="memberResult">
+		<![CDATA[
+			select count(*) as loginCnt, loginTime as loginTimeString
+			from (select cast(loginTime as character varying(1000)) loginTime, loginCnt from tbl_login)
+			group by loginTime
+		]]>
+	</select>
+
+	<!-- 구글차트 회원가입 횟수 -->
+	<select id="newloginCnt" resultMap="memberResult">
+		<![CDATA[
+			select count(*) as joinCnt,memberJoinDate as joinTimeString
+			from (select cast(memberJoinDate as character varying(1000)) memberJoinDate, joinCnt from tbl_member)
+			group by memberJoinDate
+		]]>
+	</select>
+
+	<!-- 검색 -->
+	<select id="searchMember" parameterType="java.util.Map" resultMap="memberResult">
+		select * from tbl_member
+		<choose>
+			<when test='searchCondition.equals("nickName")'>
+				where nickName like '%' || #{searchInput} || '%'
+				order by memberNo desc
+			</when>
+			<when test='searchCondition.equals("memberId")'>
+				where memberId like '%' || #{searchInput} || '%'
+				order by memberNo desc
+			</when>
+			<when test='searchCondition.equals("email")'>
+				where email like '%' || #{searchInput} || '%'
+				order by memberNo desc
+			</when>
+			<when test='searchCondition.equals("nickNameEmail")'>
+				where (nickName like '%' || #{searchInput} || '%'
+					OR email like '%' || #{searchInput} || '%')
+					order by memberNo desc
+			</when>
+			<otherwise>
+				where ${searchCondition} like '%' || #{searchInput} || '%'
+				order by memberNo desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 쪽지 검색 -->
+	<select id="searchMessage" parameterType="java.util.Map" resultMap="messageResult">
+      select * from tbl_message
+      <choose>
+         <when test='searchCondition.equals("nickName")'>
+            where nickName like '%' || #{searchInput} || '%'
+            order by messageNo desc
+         </when>
+         <when test='searchCondition.equals("senderNickName")'>
+            where senderNickName like '%' || #{searchInput} || '%'
+            order by messageNo desc
+         </when>
+         <when test='searchCondition.equals("title")'>
+            where messageTitle like '%' || #{searchInput} || '%'
+            order by messageNo desc
+         </when>
+         <when test='searchCondition.equals("content")'>
+            where messageContent like '%' || #{searchInput} || '%'
+            order by messageNo desc
+         </when>
+         <when test='searchCondition.equals("noReadTitle")'>
+            where (messageStatus = 'noRead' 
+               AND messageTitle like '%' || #{searchInput} || '%') 
+               order by messageNo desc
+         </when>
+         <otherwise>
+            where ${searchCondition} like '%' || #{searchInput} || '%'
+            order by messageNo desc
+         </otherwise>
+      </choose>
+   </select>
+   
+   <!-- 멤버가 게시글 작성시 총 게시글 수 올려주기 -->
+   <update id="updateArticleCnt" parameterType="java.util.Map">
+   		update tbl_login set articleCnt = articleCnt + 1
+   		where memberId = #{memberId}
+   </update>
+   
+   <!-- 멤버가 댓글 작성시 총 댓글 수 올려주기 -->
+   <update id="updateCommentCnt" parameterType="java.util.Map">
+   		update tbl_login set commentCnt = commentCnt + 1
+   		where memberId = #{memberId}
+   </update>
+	
+</mapper>
+

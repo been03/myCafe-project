@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration 	PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<typeAlias type="com.project.mycafe.article.vo.ArticleVO"
+			alias="articleVO" />
+		<typeAlias type="com.project.mycafe.board.vo.BoardVO"
+			alias="boardVO" />
+		<typeAlias type="com.project.mycafe.article.vo.CommentVO"
+			alias="commentVO" />
+		<typeAlias type="com.project.mycafe.article.vo.EventVO"
+			alias="eventVO" />
+		<typeAlias type="com.project.mycafe.article.vo.AttendanceVO"
+			alias="attendanceVO" />
+		<typeAlias type="com.project.mycafe.member.vo.MemberVO"
+			alias="memberVO" />		
+		<typeAlias type="com.project.mycafe.admin.member.vo.MessageVO"
+			alias="messageVO" />
+		<typeAlias type="com.project.mycafe.admin.member.vo.LevelVO"
+			alias="LevelVO" />
+		<typeAlias type="com.project.mycafe.board.vo.BoardVO"
+			alias="boardVO" />
+		<typeAlias
+			type="com.project.mycafe.admin.category.vo.CategoryVO"
+			alias="categoryVO" />
+		<typeAlias
+			type="com.project.mycafe.commons.file.vo.ImageFile"
+			alias="imageFileVO"></typeAlias>
+	</typeAliases>
+</configuration>
+
+
+
